@@ -1,0 +1,28 @@
+CREATE TABLE raw_events (
+	raw_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	received_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	data_source VARCHAR(50),
+	message_id VARCHAR(100),                        
+    run_id VARCHAR(255),                            
+	payload JSONB
+);
+
+CREATE TABLE habits (
+	habit_id SERIAL PRIMARY KEY,
+	name VARCHAR(50) UNIQUE,
+	unit VARCHAR(50),
+	monthly_target INT,
+	is_active BOOL DEFAULT TRUE
+);
+
+CREATE TABLE habits_logs(
+	date DATE,
+	value NUMERIC(5,2),
+	habit_id INT,
+	PRIMARY KEY (date,habit_id),
+	FOREIGN KEY (habit_id) REFERENCES habits(habit_id)
+	
+);
+
+
+    
