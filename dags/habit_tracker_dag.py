@@ -1,13 +1,33 @@
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from datetime import datetime, timedelta
-import pandas as pd
-from sqlalchemy import text, create_engine
-import logging
+import sys
+import os
+# Path - Gemini
+ruta_actual = os.path.dirname(__file__)
+ruta_pasillo = os.path.join(ruta_actual, '..')
+ruta_completa = os.path.abspath(ruta_pasillo)
+sys.path.append(ruta_completa)
+#
+
+from datetime import datetime, timedelta # noqa: E402
+import logging # noqa: E402
+import json # noqa: E402
+
+from airflow import DAG # noqa: E402
+from airflow.operators.python import PythonOperator # noqa: E402
+from airflow.providers.postgres.hooks.postgres import PostgresHook # noqa: E402
+
+#import pandas as pd # noqa: E402
+#from sqlalchemy import text, create_engine # noqa: E402
+
+#from db_models import Raw_event # noqa: E402
+
+from src.src import consultar_respuestas # noqa: E402
+
+
 
 logger = logging.getLogger(__name__)
 
-json = {
+
+simulacion_telegram = {
     "update_id": 123456789,
     "message": {
         "message_id": 42,
@@ -18,8 +38,29 @@ json = {
 }
 
 
-def extract_raw():
-    pass
+def extract_raw(**context):
+    respuestas = consultar_respuestas()
+
+    hook = PostgresHook(postgres_conn_id="postgres_habit_tracker")
+
+    query = """
+        INSERT INTO raw_events (data_source, message_id, run_id, payload)
+        VALUES (%s, %s, %s, %s);
+    """
+    for r in respuestas:
+        try:
+
+            data_source = "telegram"
+            message_id = str(r["message"]["message_id"])
+            run_id = context["run_id"]
+            payload = json.dumps(r)
+
+            hook.run(query, parameters=(data_source, message_id, run_id, payload))
+
+            logger.info(f'Respuesta agregada correctamente a tabla raw_events, message_id : {message_id}')
+
+        except Exception as e:
+            logger.error(f"Error al intentar cargar una respuesta en raw_events : {e}")
 
 
 def transform():
