@@ -7,6 +7,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+json = {
+    "update_id": 123456789,
+    "message": {
+        "message_id": 42,
+        "from": {"id": 987654321, "is_bot": False, "first_name": "Lucio"},
+        "date": 1708785600,
+        "text": "Gym 1",
+    },
+}
+
 
 def extract_raw():
     pass
