@@ -120,14 +120,35 @@ def transform(**context):
             }
 
             clean_data.append(clean)
-            
+
     return clean_data    
 
 
 
 
-def load_core():
-    pass
+def load_core(**context):
+    data = context['ti'].xcom_pull(task_ids='transform')
+
+    hook = PostgresHook(postgres_conn_id="postgres_habit_tracker")
+
+    for d in data:
+        try:
+            date = d.get('date')
+            value = d.get('value')
+            habit_id = d.get('habit_id')
+
+            query = """
+                INSERT INTO habits_logs(date, value, habit_id)
+                VALUES (%s,%s,%s);
+            """
+
+            hook.run(query,parameters=(date,value,habit_id))
+
+            logger.info(f'Dato limpio cargado, date : {date}, habit_id : {habit_id}')
+        except Exception as e:
+            logger.error(f'Error al cargar los datos limpios : {e}')
+    
+
 
 
 default_args = {"owner": "Lucio", "retries": 1, "retry_delay": timedelta(minutes=5)}
