@@ -11,3 +11,14 @@ def consultar_respuestas():
         "text": "Gym 1",
     },
 }]
+
+
+def transform_pre_value(pre_value):
+    
+    si = ['Si','si']
+    
+    if pre_value in si:
+        return 1
+    
+    else:
+        return 0

@@ -18,9 +18,9 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook # noqa: E402
 #import pandas as pd # noqa: E402
 #from sqlalchemy import text, create_engine # noqa: E402
 
-#from db_models import Raw_event # noqa: E402
+#from src.clases import Clean_habit # noqa: E402
 
-from src.src import consultar_respuestas # noqa: E402
+from src.src import consultar_respuestas, transform_pre_value # noqa: E402
 
 
 
@@ -63,8 +63,67 @@ def extract_raw(**context):
             logger.error(f"Error al intentar cargar una respuesta en raw_events : {e}")
 
 
-def transform():
-    pass
+def transform(**context):
+    hook = PostgresHook(postgres_conn_id="postgres_habit_tracker")
+
+    query = """
+        SELECT payload
+        FROM raw_events
+        WHERE run_id = %s;
+    """
+
+    habits = hook.get_records(query,parameters = (context['run_id'],))
+    
+    date = context['ds']
+
+    clean_data = []
+
+    query_id = """
+        SELECT name, habit_id
+        FROM habits;
+    """
+    habits_id = hook.get_records(query_id)
+    map_habits = {fila[0]:fila[1] for fila in habits_id}
+
+    for h in habits:
+        payload = h[0]
+        if 'callback_query' in payload:
+            response = payload['callback_query']['data']
+
+
+            name, pre_value = response.split('_')
+
+            value = transform_pre_value(pre_value)
+            habit_id = map_habits.get(name)
+
+            clean = {
+                'date':date,
+                'value':value,
+                'habit_id':habit_id
+            }
+
+            clean_data.append(clean)
+        
+        elif 'message' in payload:
+            response = payload['message']['text']
+
+            name_and_value = response.split(' ')
+            name = name_and_value[0]
+            value = int(name_and_value[1])
+
+            habit_id = map_habits.get(name)
+
+            clean = {
+                'date':date,
+                'value':value,
+                'habit_id':habit_id
+            }
+
+            clean_data.append(clean)
+            
+    return clean_data    
+
+
 
 
 def load_core():
@@ -82,9 +141,7 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    task_extract_raw = PythonOperator(
-        task_id="extract_raw", python_callable=extract_raw
-    )
+    task_extract_raw = PythonOperator(task_id="extract_raw", python_callable=extract_raw)
 
     task_transform = PythonOperator(task_id="transform", python_callable=transform)
 
