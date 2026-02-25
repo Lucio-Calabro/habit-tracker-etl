@@ -5,6 +5,7 @@ ruta_actual = os.path.dirname(__file__)
 ruta_pasillo = os.path.join(ruta_actual, '..')
 ruta_completa = os.path.abspath(ruta_pasillo)
 sys.path.append(ruta_completa)
+sys.path.append('/home/lucio/Escritorio/HabitTracker')
 #
 
 from datetime import datetime, timedelta # noqa: E402
@@ -41,7 +42,7 @@ simulacion_telegram = {
 def extract_raw(**context):
     respuestas = consultar_respuestas()
 
-    hook = PostgresHook(postgres_conn_id="postgres_habit_tracker")
+    hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
     query = """
         INSERT INTO raw_events (data_source, message_id, run_id, payload)
@@ -64,7 +65,7 @@ def extract_raw(**context):
 
 
 def transform(**context):
-    hook = PostgresHook(postgres_conn_id="postgres_habit_tracker")
+    hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
     query = """
         SELECT payload
@@ -129,7 +130,11 @@ def transform(**context):
 def load_core(**context):
     data = context['ti'].xcom_pull(task_ids='transform')
 
-    hook = PostgresHook(postgres_conn_id="postgres_habit_tracker")
+    if not data:
+        logger.info('No hay datos para subir')
+        return
+
+    hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
     for d in data:
         try:

@@ -8,7 +8,7 @@ def consultar_respuestas():
         "message_id": 42,
         "from": {"id": 987654321, "is_bot": False, "first_name": "Lucio"},
         "date": 1708785600,
-        "text": "Gym 1",
+        "text": "gym 1",
     },
 }]
 
