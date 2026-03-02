@@ -21,7 +21,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook # noqa: E402
 
 #from src.clases import Clean_habit # noqa: E402
 
-from src.src import consultar_respuestas, transform_pre_value # noqa: E402
+from src.src import consultar_respuestas, transform_pre_value , get_date# noqa: E402
 
 
 
@@ -46,13 +46,20 @@ def extract_raw(**context):
 
     query = """
         INSERT INTO raw_events (data_source, message_id, run_id, payload)
-        VALUES (%s, %s, %s, %s);
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (message_id) DO NOTHING;
     """
     for r in respuestas:
         try:
 
             data_source = "telegram"
-            message_id = str(r["message"]["message_id"])
+
+            if 'message' in r:
+                message_id = str(r["message"]["message_id"])
+            
+            elif 'callback_query' in r:
+                message_id = str(r['callback_query']["message"]["message_id"])
+
             run_id = context["run_id"]
             payload = json.dumps(r)
 
@@ -75,7 +82,7 @@ def transform(**context):
 
     habits = hook.get_records(query,parameters = (context['run_id'],))
     
-    date = context['ds']
+    date = get_date(habits)
 
     clean_data = []
 
@@ -144,7 +151,9 @@ def load_core(**context):
 
             query = """
                 INSERT INTO habits_logs(date, value, habit_id)
-                VALUES (%s,%s,%s);
+                VALUES (%s,%s,%s)
+                ON CONFLICT (date, habit_id)
+                DO UPDATE SET value = EXCLUDED.value;
             """
 
             hook.run(query,parameters=(date,value,habit_id))
@@ -153,6 +162,38 @@ def load_core(**context):
         except Exception as e:
             logger.error(f'Error al cargar los datos limpios : {e}')
     
+
+def monthly_update(**context):
+    
+    hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
+
+    target_month = context['ds'].replace('-', '')[:6]
+
+    query = """
+        INSERT INTO monthly_progress (month_date,habit_id,mtd_value,last_updated_at)
+
+        SELECT 
+            TO_CHAR(date, 'YYYYMM') as month_date,
+            habit_id,
+            SUM(value) as mtd_value,
+            CURRENT_TIMESTAMP AS last_updated_at
+        FROM habits_logs
+        WHERE TO_CHAR(date,'YYYYMM') = %s
+        GROUP BY TO_CHAR(date,'YYYYMM'),habit_id
+
+        ON CONFLICT (month_date,habit_id)
+        DO UPDATE SET
+            mtd_value = EXCLUDED.mtd_value,
+            last_updated_at = EXCLUDED.last_updated_at;
+    """
+
+    try:
+        hook.run(query, parameters=(target_month,))
+        logger.info(f"Progreso mensual actualizado para el mes {target_month}")
+    except Exception as e:
+        logger.error(f"Error actualizando mes {e}")
+
+
 
 
 
@@ -173,6 +214,6 @@ with DAG(
 
     task_load_core = PythonOperator(task_id="load_core", python_callable=load_core)
 
-    task_monthly_update = PythonOperator( task_id='monthly_update',python_callable=#)
+    task_monthly_update = PythonOperator( task_id='monthly_update',python_callable=monthly_update)
 
-    task_extract_raw >> task_transform >> task_load_core
+    task_extract_raw >> task_transform >> task_load_core >> task_monthly_update

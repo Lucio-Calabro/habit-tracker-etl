@@ -25,7 +25,7 @@ CREATE TABLE habits_logs(
 );
 
 CREATE TABLE monthly_progress (
-	month_date VARCHAR(6) UNIQUE,
+	month_date VARCHAR(6),
 	habit_id INT,
 	mtd_value NUMERIC,
 	last_updated_at TIMESTAMP,
