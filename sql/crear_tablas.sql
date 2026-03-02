@@ -40,7 +40,7 @@ CREATE TABLE monthly_report (
 	habit_id INT,
 	final_value NUMERIC,
 	target_value NUMERIC,
-	compilance_ratio NUMERIC(5,2),
+	compliance_ratio NUMERIC(5,2),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	
 	PRIMARY KEY (month_date,habit_id),

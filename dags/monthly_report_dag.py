@@ -19,8 +19,6 @@ from airflow.operators.python import PythonOperator # noqa: E402
 logger = logging.getLogger(__name__)
 
 
-def extract():
-    pass
 def load_monthly_report():
     pass
 def report():
@@ -37,14 +35,11 @@ with DAG(
     schedule_interval="@monthly",
     catchup=False,
 ) as dag:
-    task_extract = PythonOperator(task_id="extract", python_callable=extract)
 
     task_load_monthly_report = PythonOperator(task_id="load_monthly_report", python_callable=load_monthly_report)
 
     task_report = PythonOperator(task_id="report", python_callable=report)
 
-    
-
-    task_extract >> task_load_monthly_report >> task_report 
+    task_load_monthly_report >> task_report 
 
 
