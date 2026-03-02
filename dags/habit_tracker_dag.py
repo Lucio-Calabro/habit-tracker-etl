@@ -173,4 +173,6 @@ with DAG(
 
     task_load_core = PythonOperator(task_id="load_core", python_callable=load_core)
 
+    task_monthly_update = PythonOperator( task_id='monthly_update',python_callable=#)
+
     task_extract_raw >> task_transform >> task_load_core

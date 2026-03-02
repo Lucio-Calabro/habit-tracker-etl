@@ -24,5 +24,14 @@ CREATE TABLE habits_logs(
 	
 );
 
-
+CREATE TABLE monthly_progress (
+	month_date VARCHAR(6) UNIQUE,
+	habit_id INT,
+	mtd_value NUMERIC,
+	last_updated_at TIMESTAMP,
+	
+	PRIMARY KEY (month_date,habit_id),
+	
+	FOREIGN KEY (habit_id) REFERENCES habits (habit_id)
+);
     
