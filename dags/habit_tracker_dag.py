@@ -132,8 +132,6 @@ def transform(**context):
     return clean_data    
 
 
-
-
 def load_core(**context):
     data = context['ti'].xcom_pull(task_ids='transform')
 
