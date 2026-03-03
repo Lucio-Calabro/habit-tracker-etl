@@ -16,4 +16,9 @@ Al finalizar el mes, utilizando una tabla aparte que contiene los datos únicame
 Se decidió guardar los datos en crudo para prevenir posibles cambios en el formato o si ocurre algún error con los datos limpios.
 <br>
 Utilizamos una tabla auxiliar para los cálculos del cierre de mes para no saturar la tabla principal y ser mas ordenados.
+<br>
+La duplicacion la evitamos gracias a un buen manejo de las consultas SQL, donde en caso de conflicto y dependiendo la situacion se actualizan los datos o no pasa nada, pero nunca hay duplicados. Si el DAG falla a mitad de ejecucion y se hace un retry, la segunda vez que se ejecute se terminaran de cargar los datos que no fueron cargados antes. 
+<br>
+
+
 
