@@ -14,11 +14,21 @@ Al finalizar el mes, utilizando una tabla aparte que contiene los datos únicame
 <br><br>
 
 Se decidió guardar los datos en crudo para prevenir posibles cambios en el formato o si ocurre algún error con los datos limpios.
-<br>
-Utilizamos una tabla auxiliar para los cálculos del cierre de mes para no saturar la tabla principal y ser mas ordenados.
-<br>
-La duplicacion la evitamos gracias a un buen manejo de las consultas SQL, donde en caso de conflicto y dependiendo la situacion se actualizan los datos o no pasa nada, pero nunca hay duplicados. Si el DAG falla a mitad de ejecucion y se hace un retry, la segunda vez que se ejecute se terminaran de cargar los datos que no fueron cargados antes. 
+
 <br>
 
+Utilizamos una tabla auxiliar para los cálculos del cierre de mes para no saturar la tabla principal y ser mas ordenados.
+
+<br>
+
+La duplicación la evitamos gracias a un buen manejo de las consultas SQL, donde en caso de conflicto y dependiendo la situación se actualizan los datos o no pasa nada, pero nunca hay duplicados. Si el DAG falla a mitad de ejecución y se hace un retry, la segunda vez que se ejecute se terminaran de cargar los datos que no fueron cargados antes. 
+
+<br>
+
+Los datos son bien distribuidos entre las tablas para poder diferenciar bien los que corresponden a la capa CORE y capa MART. En la capa CORE tenemos los datos centrales e históricos almacenados de una manera ordenada, en este caso son las tablas habits (tabla dimensión) y habits_logs (tabla FACT). Mientras que en la capa CORE tenemos los datos que van a ser utilizados para generar los informes y ser consumidos por el usuario final, las tablas monthly_progress y monthly_report.
+
+<br>
+
+Monthly_progress tiene el registro acumulado mensual de cada habito mientras que la tabla monthly_report se genera a fin de mes utilizando la tabla monthly_progress para procesar los datos y generar los informes. 
 
 
