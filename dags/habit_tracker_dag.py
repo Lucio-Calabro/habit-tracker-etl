@@ -40,7 +40,7 @@ simulacion_telegram = {
 
 
 def extract_raw(**context):
-    respuestas = consultar_respuestas()
+    respuestas = consultar_respuestas(logger)
 
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
