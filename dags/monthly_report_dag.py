@@ -5,7 +5,7 @@ ruta_actual = os.path.dirname(__file__)
 ruta_pasillo = os.path.join(ruta_actual, '..')
 ruta_completa = os.path.abspath(ruta_pasillo)
 sys.path.append(ruta_completa)
-sys.path.append('/home/lucio/Escritorio/HabitTracker')
+sys.path.append('/home/lucio/HabitTracker')
 #
 
 from datetime import datetime, timedelta # noqa: E402
