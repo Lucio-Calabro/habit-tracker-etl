@@ -2,7 +2,7 @@ CREATE TABLE raw_events (
 	raw_event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	received_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	data_source VARCHAR(50),
-	message_id VARCHAR(100),                        
+	message_id VARCHAR(100) UNIQUE,                        
     run_id VARCHAR(255),                            
 	payload JSONB
 );
