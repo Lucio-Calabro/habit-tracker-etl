@@ -25,7 +25,7 @@ def load_monthly_report(**context):
 
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
-    target_month = context['ds'].replace('-', '')[:6]
+    target_month = context['ds'].replace('-', '')[:6] 
 
     query = """
         INSERT INTO monthly_report (month_date,habit_id,final_value,target_value, compliance_ratio)
