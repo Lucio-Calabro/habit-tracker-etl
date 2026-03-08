@@ -1,34 +1,40 @@
-# Habit Tracker
+#h2 📊 Telegram Habit Tracker & Data Pipeline
+Un sistema de seguimiento de hábitos end-to-end que soluciona la fricción de las apps tradicionales mediante el uso de un bot de Telegram, automatizando la ingesta de datos, su procesamiento y la generación de reportes mensuales.
 
-<br>
+#h2 🚀 El Problema y la Solución
+El Problema: Tras meses de frustración probando distintas aplicaciones de habit tracking, noté que el mayor punto de fallo era la fricción al momento de cargar los datos día a día, lo que llevaba al abandono.
+La Solución: Desarrollé un flujo de datos automatizado donde el usuario interactúa de manera natural a través de un Bot de Telegram. El sistema ingiere estos mensajes, los procesa y, al finalizar el mes, envía un reporte analítico por email comparando el progreso contra los objetivos mensuales establecidos.
 
-Llevaba meses frustrado por no poder encontrar una app que me permita trackear los hábitos de mi día a día de una manera cómoda y que no se me olvide nunca, así que decidí crear un sistema el cual me ayuda a hacerlo.
-Mediante un Bot de Telegram el usuario puede ingresar los datos sobre como le fue en el día de una manera sencilla e interactiva, utilizando encuestas o mensajes directos, esos datos son almacenados para luego utilizarlos al finalizar el mes para generar informes que le permitan al usuario visualizar si logró cumplir sus objetivos mensuales y comparar su progreso con meses anteriores.
+#h2 🏗️ Arquitectura de Datos y Modelado
+El proyecto sigue las mejores prácticas de la Ingeniería de Datos, separando la información en capas lógicas para asegurar la escalabilidad y la calidad del dato:
 
-<br><br> 
+Capa RAW (Crudo): Los mensajes de Telegram se almacenan en su formato original. Esto garantiza la trazabilidad y permite reprocesar la información en caso de errores futuros o cambios en el formato.
 
-Los datos son ingresados por el usuario y almacenados en crudo en una tabla de Postgres, luego son transformados y guardados en otra tabla donde se van a guardar los registros de todos los días. <br> 
+Capa CORE (Silver): Los datos estructurados e históricos. Modelados bajo un esquema de estrella (Star Schema):
 
-Al finalizar el mes, utilizando una tabla aparte que contiene los datos únicamente de ese mes, se genera un informe con un resumen mensual el cual es enviado al usuario a través de email para que pueda tener los resúmenes de cada mes y hacerle su respectivo análisis.
+habits (Dimensión): Almacena el contexto de cada hábito (nombre, unidad de medida, objetivo).
 
-<br><br>
+habits_logs (Fact Table): El registro transaccional diario de los hábitos completados.
 
-Se decidió guardar los datos en crudo para prevenir posibles cambios en el formato o si ocurre algún error con los datos limpios.
+Capa MART (Gold): Datos listos para el consumo del usuario final y generación de reportes.
 
-<br>
+monthly_progress: Acumulados mensuales procesados en una tabla auxiliar para no saturar/bloquear la tabla transaccional principal.
 
-Utilizamos una tabla auxiliar para los cálculos del cierre de mes para no saturar la tabla principal y ser mas ordenados.
+monthly_report: Resumen final utilizado para disparar el envío del informe por correo electrónico.
 
-<br>
+#h2 ⚙️ Decisiones Técnicas Destacadas
+Idempotencia y Manejo de Duplicados: Las consultas SQL (Upserts / ON CONFLICT) están diseñadas para que, si el DAG de Airflow falla a mitad de ejecución y requiere un reintento (retry), el sistema procese únicamente los datos faltantes sin generar registros duplicados.
 
-La duplicación la evitamos gracias a un buen manejo de las consultas SQL, donde en caso de conflicto y dependiendo la situación se actualizan los datos o no pasa nada, pero nunca hay duplicados. Si el DAG falla a mitad de ejecución y se hace un retry, la segunda vez que se ejecute se terminaran de cargar los datos que no fueron cargados antes. 
+Desacoplamiento Analítico: Se utilizan tablas auxiliares exclusivamente para los cálculos de cierre de mes. Esto mantiene la tabla transaccional (habits_logs) ágil y ordenada.
 
-<br>
+#h2 🛠️ Stack Tecnológico
+Lenguaje: Python
 
-Los datos son bien distribuidos entre las tablas para poder diferenciar bien los que corresponden a la capa CORE y capa MART. En la capa CORE tenemos los datos centrales e históricos almacenados de una manera ordenada, en este caso son las tablas habits (tabla dimensión) y habits_logs (tabla FACT). Mientras que en la capa CORE tenemos los datos que van a ser utilizados para generar los informes y ser consumidos por el usuario final, las tablas monthly_progress y monthly_report.
+Orquestación: Apache Airflow
 
-<br>
+Base de Datos: PostgreSQL
 
-Monthly_progress tiene el registro acumulado mensual de cada habito mientras que la tabla monthly_report se genera a fin de mes utilizando la tabla monthly_progress para procesar los datos y generar los informes. 
+Infraestructura: Linux (WSL2)
 
+Integraciones: Telegram API
 
