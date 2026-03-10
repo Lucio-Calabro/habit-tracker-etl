@@ -142,7 +142,9 @@ def monthly_update(**context):
     
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
-    target_month = context['ds'].replace('-', '')[:6]
+    ahora_arg = pendulum.now("America/Argentina/Buenos_Aires")
+    fecha_segura = ahora_arg.subtract(hours=6)
+    target_month = fecha_segura.strftime('%Y%m')
 
     query = """
         INSERT INTO monthly_progress (month_date,habit_id,mtd_value,last_updated_at)
