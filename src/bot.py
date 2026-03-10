@@ -1,8 +1,10 @@
 import requests
 import json
+from airflow.models import Variable
 
-TOKEN = '8630998587:AAFnkqf1CE4gEO1l4BimTKFZ47DCPX8dL9g'
-CHAT_ID = '8509248214' 
+bot_token = Variable.get("telegram_token")
+    
+chat_id = Variable.get("chat_id", default_var=None)
 
 def configurar_teclado_fijo():
     # Armamos la matriz de botones gigantes
