@@ -1,6 +1,6 @@
 import requests
 from airflow.models import Variable
-from datetime import datetime
+#from datetime import datetime
 import matplotlib.pyplot as plt
 
 import smtplib
@@ -37,27 +37,16 @@ def consultar_respuestas(logger):
             ultimo_update_id = resultados[-1]["update_id"]
             nuevo_offset = ultimo_update_id + 1
             
-            Variable.set("telegram_update_offset", nuevo_offset)
             logger.info(f"Se bajaron {len(resultados)} mensajes nuevos. Offset actualizado a {nuevo_offset}.")
         else:
             logger.info("El bot no tiene mensajes nuevos.")
 
-        return resultados
+        return resultados, nuevo_offset
 
     except Exception as e:
         logger.error(f"Error al intentar conectarse con Telegram: {e}")
-        return []
+        return [], None
 
-
-def transform_pre_value(pre_value):
-    
-    si = ['Si','si']
-    
-    if pre_value in si:
-        return 1
-    
-    else:
-        return 0
     
 def interpretar_response(response, map_habits):
     habit_id = None
@@ -83,19 +72,7 @@ def interpretar_response(response, map_habits):
             valor = 0 
 
     return [habit_id,valor]
-    
-def get_date(habits):
-    date = None
-    for h in habits:
-        payload = h[0]
-        
-        if 'callback_query' in payload:
-            continue
 
-        elif 'message' in payload:
-            date =  payload['message']['date']
-            date = datetime.fromtimestamp(int(date)).strftime('%Y-%m-%d')
-            return date
 
 def generar_reporte(monthly_reports):
     # 1. Separamos los datos que vienen de la base de datos

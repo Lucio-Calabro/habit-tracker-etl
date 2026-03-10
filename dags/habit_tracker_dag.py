@@ -11,36 +11,22 @@ sys.path.append('/home/lucio/HabitTracker')
 from datetime import datetime, timedelta # noqa: E402
 import logging # noqa: E402
 import json # noqa: E402
+import pendulum # noqa: E402
 
 from airflow import DAG # noqa: E402
 from airflow.operators.python import PythonOperator # noqa: E402
 from airflow.providers.postgres.hooks.postgres import PostgresHook # noqa: E402
+from airflow.models import Variable # noqa: E402
 
-#import pandas as pd # noqa: E402
-#from sqlalchemy import text, create_engine # noqa: E402
-
-#from src.clases import Clean_habit # noqa: E402
-
-from src.src import consultar_respuestas, interpretar_response , get_date# noqa: E402
+from src.src import consultar_respuestas, interpretar_response# noqa: E402
 
 
 
 logger = logging.getLogger(__name__)
 
 
-simulacion_telegram = {
-    "update_id": 123456789,
-    "message": {
-        "message_id": 42,
-        "from": {"id": 987654321, "is_bot": False, "first_name": "Lucio"},
-        "date": 1708785600,
-        "text": "Gym 1",
-    },
-}
-
-
 def extract_raw(**context):
-    respuestas = consultar_respuestas(logger)
+    respuestas, nuevo_offset = consultar_respuestas(logger)
 
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
@@ -57,8 +43,6 @@ def extract_raw(**context):
             if 'message' in r:
                 message_id = str(r["message"]["message_id"])
             
-            elif 'callback_query' in r:
-                message_id = str(r['callback_query']["message"]["message_id"])
 
             run_id = context["run_id"]
             payload = json.dumps(r)
@@ -69,6 +53,9 @@ def extract_raw(**context):
 
         except Exception as e:
             logger.error(f"Error al intentar cargar una respuesta en raw_events : {e}")
+    
+    if nuevo_offset:
+        Variable.set("telegram_update_offset", nuevo_offset)
 
 
 def transform(**context):
@@ -82,8 +69,6 @@ def transform(**context):
 
     habits = hook.get_records(query,parameters = (context['run_id'],))
     
-    date = get_date(habits)
-
     clean_data = []
 
     query_id = """
@@ -97,24 +82,29 @@ def transform(**context):
         try:
             payload = h[0]
             
-            if 'message' in payload:
+            if 'message' in payload and 'text' in payload['message']:
+                
+                date = payload['message']['date']
                 response = payload['message']['text']
 
+                fecha_utc = pendulum.from_timestamp(int(date))
+                fecha_arg = fecha_utc.in_timezone("America/Argentina/Buenos_Aires")
+                clean_date = fecha_arg.strftime('%Y-%m-%d')
 
-                logger.error(f'{response}')
-                name_and_value = interpretar_response(response, map_habits)
-                habit_id = name_and_value[0]
-                value = int(name_and_value[1])
+                id_and_value = interpretar_response(response, map_habits)
+                habit_id = id_and_value[0]
+                value = id_and_value[1]
 
-                clean = {
-                    'date':date,
-                    'value':value,
-                    'habit_id':habit_id
-                }
-
-                clean_data.append(clean)
+                if habit_id is not None and value is not None:
+                    clean = {
+                        'date': clean_date,
+                        'value': int(value),
+                        'habit_id': habit_id
+                    }
+                    clean_data.append(clean)
+                    
         except Exception as e:
-            logger.error(f"Error {e} con {payload}")
+            logger.error(f"Error {e} procesando el payload: {payload}")
 
     return clean_data    
 
@@ -182,14 +172,14 @@ def monthly_update(**context):
 
 
 
-default_args = {"owner": "Lucio", "retries": 1, "retry_delay": timedelta(minutes=5)}
+default_args = {"owner": "Lucio", "retries": 2, "retry_delay": timedelta(minutes=5)}
 
 with DAG(
     dag_id="habit_tracker",
     default_args=default_args,
     description="DAG que se encarga de recibir los datos en crudo cargador por el usuario para poder limpiarlos y almacenarlos para que puedan ser consumidos por el usuario al finalizar el mes",
     start_date=datetime(2026, 2, 2),
-    schedule_interval="@daily",
+    schedule_interval="0 2 * * *",
     catchup=False,
 ) as dag:
 

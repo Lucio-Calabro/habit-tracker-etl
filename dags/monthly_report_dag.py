@@ -25,7 +25,8 @@ def load_monthly_report(**context):
 
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
 
-    target_month = context['ds'].replace('-', '')[:6] 
+    target_month = datetime.now() - timedelta(days=5)
+    target_month = target_month.strftime('%Y%m')
 
     query = """
         INSERT INTO monthly_report (month_date,habit_id,final_value,target_value, compliance_ratio)
@@ -54,7 +55,8 @@ def load_monthly_report(**context):
 
 def report(**context):
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
-    target_month = context['ds'].replace('-', '')[:6]
+    target_month = datetime.now() - timedelta(days=5)
+    target_month = target_month.strftime('%Y%m')
 
     query = """
         SELECT mr.month_date, mr.final_value, mr.target_value, mr.compliance_ratio, h.name
@@ -79,7 +81,7 @@ with DAG(
     default_args=default_args,
     description="DAG que se encarga de cerrar el mes, cargar los datos en la tabla monthly_report y generar el informe final de mes",
     start_date=datetime(2026, 2, 2),
-    schedule_interval="@monthly",
+    schedule_interval="0 5 1 * *",
     catchup=False,
 ) as dag:
 
