@@ -2,7 +2,7 @@ import requests
 import json
 from airflow.models import Variable
 
-bot_token = Variable.get("telegram_token")
+token = Variable.get("telegram_token")
     
 chat_id = Variable.get("chat_id", default_var=None)
 
@@ -19,12 +19,12 @@ def configurar_teclado_fijo():
     }
 
     payload = {
-        "chat_id": CHAT_ID,
+        "chat_id": chat_id,
         "text": "🛠️ ¡Teclado Data Engineer configurado!\n\nTocá los botones para registrar tus hábitos.\nPara el sueño, simplemente escribí: 'dormir 7.5'",
         "reply_markup": json.dumps(teclado_fijo)
     }
 
-    respuesta = requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json=payload)
+    respuesta = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json=payload)
     
     if respuesta.status_code == 200:
         print("¡Teclado configurado! Revisá tu celular.")

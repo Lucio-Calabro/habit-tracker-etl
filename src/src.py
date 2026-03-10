@@ -109,9 +109,9 @@ def generar_reporte(monthly_reports):
 
 def send_email(ruta_imagen,logger):
     # 1. Credenciales
-    remitente = "lucho.calabro@gmail.com" 
+    remitente = Variable.get("email")
     password = Variable.get("email_password")
-    destinatario = "lucho.calabro@gmail.com" 
+    destinatario = Variable.get("email")
 
     # 2. Armamos el "sobre" del correo
     msg = MIMEMultipart()
