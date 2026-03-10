@@ -59,6 +59,31 @@ def transform_pre_value(pre_value):
     else:
         return 0
     
+def interpretar_response(response, map_habits):
+    habit_id = None
+    valor = None
+
+    if "gym" in response:
+        habit_id = map_habits['gym']
+        valor = 1 if "✅" in response else 0
+
+    elif "leer" in response:
+        habit_id = map_habits['leer']
+        valor = 1 if "✅" in response else 0
+
+    elif "ingles" in response:
+        habit_id = map_habits['ingles']
+        valor = 1 if "✅" in response else 0
+
+    elif "dormir" in response:
+        habit_id = map_habits['dormir']
+        try:
+            valor = float(response.split(" ")[1]) 
+        except:
+            valor = 0 
+
+    return [habit_id,valor]
+    
 def get_date(habits):
     date = None
     for h in habits:

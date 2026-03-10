@@ -21,7 +21,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook # noqa: E402
 
 #from src.clases import Clean_habit # noqa: E402
 
-from src.src import consultar_respuestas, transform_pre_value , get_date# noqa: E402
+from src.src import consultar_respuestas, interpretar_response , get_date# noqa: E402
 
 
 
@@ -94,40 +94,27 @@ def transform(**context):
     map_habits = {fila[0]:fila[1] for fila in habits_id}
 
     for h in habits:
-        payload = h[0]
-        if 'callback_query' in payload:
-            response = payload['callback_query']['data']
+        try:
+            payload = h[0]
+            
+            if 'message' in payload:
+                response = payload['message']['text']
 
 
-            name, pre_value = response.split('_')
+                logger.error(f'{response}')
+                name_and_value = interpretar_response(response, map_habits)
+                habit_id = name_and_value[0]
+                value = int(name_and_value[1])
 
-            value = transform_pre_value(pre_value)
-            habit_id = map_habits.get(name)
+                clean = {
+                    'date':date,
+                    'value':value,
+                    'habit_id':habit_id
+                }
 
-            clean = {
-                'date':date,
-                'value':value,
-                'habit_id':habit_id
-            }
-
-            clean_data.append(clean)
-        
-        elif 'message' in payload:
-            response = payload['message']['text']
-
-            name_and_value = response.split(' ')
-            name = name_and_value[0]
-            value = int(name_and_value[1])
-
-            habit_id = map_habits.get(name)
-
-            clean = {
-                'date':date,
-                'value':value,
-                'habit_id':habit_id
-            }
-
-            clean_data.append(clean)
+                clean_data.append(clean)
+        except Exception as e:
+            logger.error(f"Error {e} con {payload}")
 
     return clean_data    
 
