@@ -22,6 +22,10 @@ monthly_progress: Acumulados mensuales procesados en una tabla auxiliar para no 
 
 monthly_report: Resumen final utilizado para disparar el envío del informe por correo electrónico.
 
+
+<img width="1157" height="621" alt="image" src="https://github.com/user-attachments/assets/7f7a2ff2-34b2-4eea-af9e-17e82b8623bf" />
+
+
 # ⚙️ Decisiones Técnicas Destacadas
 Idempotencia y Manejo de Duplicados: Las consultas SQL (Upserts / ON CONFLICT) están diseñadas para que, si el DAG de Airflow falla a mitad de ejecución y requiere un reintento (retry), el sistema procese únicamente los datos faltantes sin generar registros duplicados.
 
