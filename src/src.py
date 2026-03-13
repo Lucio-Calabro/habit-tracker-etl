@@ -15,7 +15,10 @@ def consultar_respuestas(logger):
     
     offset = Variable.get("telegram_update_offset", default_var=None)
 
+
     url = f"https://api.telegram.org/bot{bot_token}/getUpdates"
+
+    nuevo_offset = None
     
     params = {}
     if offset:
