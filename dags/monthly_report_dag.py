@@ -62,22 +62,6 @@ def load_monthly_report(**context):
         logger.error(f"Error al cargar {target_month} en la tabla monthly_report: {e}")
 
 def report(**context):
-    # hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
-    # target_month = datetime.now() - timedelta(days=5)
-    # target_month = target_month.strftime('%Y%m')
-
-    # query = """
-    #     SELECT mr.month_date, mr.final_value, mr.target_value, mr.compliance_ratio, h.name
-    #     FROM monthly_report mr
-    #     INNER JOIN habits h ON h.habit_id = mr.habit_id  
-    #     WHERE month_date = %s
-    # """
-
-    # monthly_reports = hook.get_records(query,parameters=(target_month,))
-
-    # reporte = generar_reporte(monthly_reports)
-    # send_email(reporte, logger)
-
 
     hook = PostgresHook(postgres_conn_id="postgrest_habit_tracker")
     target_month = datetime.now() - timedelta(days=5)
